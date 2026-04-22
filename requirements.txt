@@ -1,0 +1,7 @@
+# Core dependencies for computer vision and array manipulation
+opencv-python>=4.7.0
+numpy>=1.23.0
+
+# Dependencies for visualization and notebooks
+matplotlib>=3.6.0
+jupyter>=1.0.0

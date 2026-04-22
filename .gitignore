@@ -1,0 +1,41 @@
+# Environments
+.venv/
+env/
+venv/
+ENV/
+
+# Python compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Data and Datasets
+# Ignores data contents but keeps directory structure if .gitkeep is present
+data/*
+!data/**/.gitkeep
+
+# Models and checkpoints
+*.pt
+*.pth
+*.h5
+*.onnx
+*.weights
+models/
+checkpoints/
+
+# Logs
+logs/
+*.log
+
+# Caches
+.pytest_cache/

@@ -20,8 +20,9 @@ __pycache__/
 .DS_Store
 
 # Data and Datasets
-# Ignores data contents but keeps directory structure if .gitkeep is present
-data/*
+# Ignores data contents but keeps directory structure
+data/**
+!data/**/
 !data/**/.gitkeep
 
 # Models and checkpoints

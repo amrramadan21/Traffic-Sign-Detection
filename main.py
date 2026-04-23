@@ -2,13 +2,15 @@ import os
 import cv2
 
 from utils.image_loader import load_image
-from preprocessing.gaussian_filter import apply_gaussian_filter
-from preprocessing.median_filter import apply_median_filter
-from preprocessing.resize import resize_image
-from preprocessing.normalize import normalize_image
+from preprocessing.preprocessing import (
+    apply_gaussian_filter,
+    apply_median_filter,
+    normalize_image,
+    resize_image,
+)
 from utils.visualization import compare_filters  
 
-FILTER_TYPE = "median"   # "gaussian" and "median"
+FILTER_TYPE = "gaussian" and "median" 
 
 input_folder = "data/raw/images"
 output_folder = f"data/processed/{FILTER_TYPE}"
@@ -60,4 +62,4 @@ for i, img_name in enumerate(images):
     except Exception as e:
         print(f"Error in {img_name}: {e}")
 
-print(f"✅ Done using {FILTER_TYPE} filter!")
+print(f"Done using {FILTER_TYPE} filter!")

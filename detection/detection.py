@@ -337,7 +337,6 @@ def detect_pipeline(image, min_area=120):
         "detections": detections,
     }
 
-
 if __name__ == "__main__":
     image_path = "data/processed/gaussian/road183.png"
     image = cv2.imread(image_path)

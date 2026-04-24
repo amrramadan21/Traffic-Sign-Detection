@@ -8,58 +8,53 @@ from preprocessing.preprocessing import (
     normalize_image,
     resize_image,
 )
-from utils.visualization import compare_filters  
+from utils.visualization import compare_filters
 
-FILTER_TYPE = "gaussian" and "median" 
+FILTER_TYPES = ["gaussian", "median"]
 
 input_folder = "data/raw/images"
-output_folder = f"data/processed/{FILTER_TYPE}"
-
-os.makedirs(output_folder, exist_ok=True)
 
 images = os.listdir(input_folder)
-
-print(f"Using filter: {FILTER_TYPE}")
 print(f"Total images: {len(images)}")
 
-test_image_path = os.path.join(input_folder, images[555])
-test_image = load_image(test_image_path)
+# Show a comparison of both filters on a sample image (requires a display).
+if images:
+    sample_idx = min(555, len(images) - 1)
+    test_image = load_image(os.path.join(input_folder, images[sample_idx]))
+    gaussian_test = apply_gaussian_filter(test_image)
+    median_test   = apply_median_filter(test_image)
+    compare_filters(test_image, gaussian_test, median_test)
 
-gaussian_test = apply_gaussian_filter(test_image)
-median_test = apply_median_filter(test_image)
+for filter_type in FILTER_TYPES:
+    output_folder = f"data/processed/{filter_type}"
+    os.makedirs(output_folder, exist_ok=True)
 
-compare_filters(test_image, gaussian_test, median_test)
+    print(f"\nApplying {filter_type} filter...")
 
-for i, img_name in enumerate(images):
+    for i, img_name in enumerate(images):
+        try:
+            path  = os.path.join(input_folder, img_name)
+            image = load_image(path)
 
-    try:
-        path = os.path.join(input_folder, img_name)
+            if filter_type == "gaussian":
+                image = apply_gaussian_filter(image)
+            else:
+                image = apply_median_filter(image)
 
-        image = load_image(path)
+            image = resize_image(image)
+            image = normalize_image(image)
 
-        if FILTER_TYPE == "gaussian":
-            image = apply_gaussian_filter(image)
+            image = (image * 255).astype("uint8")
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-        elif FILTER_TYPE == "median":
-            image = apply_median_filter(image)
+            cv2.imwrite(os.path.join(output_folder, img_name), image)
 
-        else:
-            raise ValueError("Invalid filter type")
+            if i % 100 == 0:
+                print(f"  {i}/{len(images)} processed")
 
-        image = resize_image(image)
-        image = normalize_image(image)
+        except Exception as e:
+            print(f"  Error in {img_name}: {e}")
 
-        # save
-        image = (image * 255).astype("uint8")
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    print(f"Done: {filter_type} filter saved to {output_folder}/")
 
-        save_path = os.path.join(output_folder, img_name)
-        cv2.imwrite(save_path, image)
-
-        if i % 100 == 0:
-            print(f"Processed {i} images")
-
-    except Exception as e:
-        print(f"Error in {img_name}: {e}")
-
-print(f"Done using {FILTER_TYPE} filter!")
+print("\nAll filters applied.")

@@ -98,12 +98,6 @@ project/
 
 ```bash
 python main.py
-python detection/run_kmeans_batch.py --max-images 10
+python detection/run_kmeans_batch.py 
 python features/sift_extractor.py
-```
-
-Use the full detector command when the smoke test looks correct:
-
-```bash
-python detection/run_kmeans_batch.py
 ```

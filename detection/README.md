@@ -165,15 +165,7 @@ Known limitations and next steps
     large datasets.
   - Replace heuristic detection with a small CNN to classify ROIs (best
     long-term solution).
-
----
-
-If you want, I can:
-- Run the full dataset with recommended settings and report metrics.
-- Add `--save-masks` and a simple connected-component filter to the pipeline.
-- Move shared utilities (annotation parsing, canonicalization) into
-  `utils/` for reuse by the notebook and scripts.
-
+    
 ---
 
 File map (inside `detection/`):

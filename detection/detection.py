@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import os
 
 
 def convert_to_hsv(image):
@@ -213,20 +214,23 @@ def build_detection(contour, mask, image, color_name, min_area, max_area_ratio):
     # filter border-touching regions for small/medium detections.
     is_large = area > 0.02 * image_area
 
-    if color_name == "Blue" and not is_large:
+    # --- UPDATED: Border Rejection ---
+    # Apply border rejection to ALL small/medium detections.
+    # Clouds bleed off the edges of the frame; real signs usually sit fully inside.
+    if not is_large:
         if touches_border(x, y, w, h, image_width, image_height):
             return None
 
     # Sky filter — two tiers:
-    # 1. Small/medium blobs (not is_large): reject if starting within
-    #    the top 8 % of the frame and large enough to be sky noise.
-    # 2. Large blobs (is_large=True): previously bypassed all sky checks.
-    #    Add a check: if the bounding box starts at the very top of the
-    #    image (y < 5 %) the blob is sky, not a sign — reject it.
-    #    Genuine large close-up signs always have some non-blue content
-    #    above them (pole, building, clear sky gap) so their y > 5 %.
     if color_name == "Blue":
         if not is_large and y < int(0.08 * image_height) and area > 0.008 * image_area:
+            return None
+        if is_large and y < int(0.05 * image_height):
+            return None
+
+    # --- NEW: Sky Filter for Red ---
+    if color_name == "Red":
+        if not is_large and y < int(0.08 * image_height) and area > 0.005 * image_area:
             return None
         if is_large and y < int(0.05 * image_height):
             return None
@@ -236,22 +240,44 @@ def build_detection(contour, mask, image, color_name, min_area, max_area_ratio):
         # Wider range to accept landscape road signs and portrait pedestrian signs
         if aspect_ratio < 0.35 or aspect_ratio > 2.50:
             return None
-    else:
-        if aspect_ratio < 0.35 or aspect_ratio > 2.50:
+    elif color_name == "Red":
+        # --- UPDATED: TIGHTENED ASPECT RATIO ---
+        # Red signs (Stop, Yield, Speed Limit) are symmetrical (~1:1).
+        # Sunset clouds form wide, stretched horizontal bands.
+        if aspect_ratio < 0.65 or aspect_ratio > 1.35:
+            return None
+
+    # --- NEW: Solidity Check ---
+    # Solidity = Contour Area / Convex Hull Area
+    # Signs are rigid geometric shapes. Clouds are amorphous and jagged.
+    hull = cv2.convexHull(contour)
+    hull_area = cv2.contourArea(hull)
+    if hull_area > 0:
+        solidity = area / float(hull_area)
+        if solidity < 0.75:  # Reject anything that isn't a solid, convex shape
             return None
 
     bbox_area = float(w * h)
     fill_ratio = area / bbox_area
-    min_fill_ratio = 0.15 if color_name == "Blue" else 0.08
+    
+    # --- UPDATED: Tighter Density Checks for Red ---
+    if color_name == "Blue":
+        min_fill_ratio = 0.15
+        min_color_ratio = 0.15
+    elif color_name == "Red":
+        min_fill_ratio = 0.40   # Increased to enforce solid shapes
+        min_color_ratio = 0.30  # Increased to enforce solid color
+    else:
+        min_fill_ratio = 0.08
+        min_color_ratio = 0.06
+
     if fill_ratio < min_fill_ratio:
         return None
 
     roi_mask = mask[y: y + h, x: x + w]
     color_pixels = cv2.countNonZero(roi_mask)
     color_ratio = color_pixels / bbox_area
-    # Blue signs with white content inside (pedestrian figures, arrows) have
-    # lower pixel density — relax the threshold slightly.
-    min_color_ratio = 0.15 if color_name == "Blue" else 0.06
+
     if color_ratio < min_color_ratio:
         return None
 
@@ -271,7 +297,6 @@ def build_detection(contour, mask, image, color_name, min_area, max_area_ratio):
         "shape_sides": shape_sides,
         "score": score,
     }
-
 
 def detect_red_circles(image, red_mask):
     """
@@ -704,17 +729,55 @@ def detect_pipeline(image, min_area=80):
     }
 
 
+def display_results(results, save_dir="out"):
+    """
+    Try to show images with OpenCV GUI; if not available (headless
+    or headless OpenCV build), save the images to `save_dir` instead
+    and print their paths for inspection.
+    """
+    try:
+        cv2.imshow("Red Mask", results["red_mask"])
+        cv2.imshow("Blue Mask", results["blue_mask"])
+        cv2.imshow("Final Detection", results["output"])
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+    except cv2.error:
+        os.makedirs(save_dir, exist_ok=True)
+        red_path = os.path.join(save_dir, "red_mask.png")
+        blue_path = os.path.join(save_dir, "blue_mask.png")
+        out_path = os.path.join(save_dir, "final_detection.png")
+        cv2.imwrite(red_path, results["red_mask"])
+        cv2.imwrite(blue_path, results["blue_mask"])
+        cv2.imwrite(out_path, results["output"])
+        abs_dir = os.path.abspath(save_dir)
+        print(f"GUI not available. Saved masks and output to: {abs_dir}")
+        print(f" - {red_path}")
+        print(f" - {blue_path}")
+        print(f" - {out_path}")
+
+
 if __name__ == "__main__":
-    image_path = "data/processed/gaussian/road37.png"
+    # Resolve image path relative to the project (script) directory so the
+    # module can be executed from any working directory.
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(script_dir)
+    rel_path = os.path.join("data", "processed", "gaussian", "road37.png")
+    image_path = os.path.join(project_root, rel_path)
+
+    # Fallback: if the path doesn't exist relative to the script, check the
+    # current working directory (user may run the script from the project root).
+    if not os.path.exists(image_path) and os.path.exists(rel_path):
+        image_path = rel_path
+
+    print(f"Loading image from: {image_path}")
     image = cv2.imread(image_path)
 
     if image is None:
-        raise ValueError("Image not found!")
+        raise ValueError(f"Image not found at '{image_path}' (cwd={os.getcwd()})")
 
     results = detect_pipeline(image)
 
     print(f"Detected signs: {len(results['rois'])}")
-
     for detection in results["detections"]:
         print(
             f"{detection['color']} -> "
@@ -723,8 +786,4 @@ if __name__ == "__main__":
             f"color_ratio={detection['color_ratio']:.2f}"
         )
 
-    cv2.imshow("Red Mask", results["red_mask"])
-    cv2.imshow("Blue Mask", results["blue_mask"])
-    cv2.imshow("Final Detection", results["output"])
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    display_results(results)

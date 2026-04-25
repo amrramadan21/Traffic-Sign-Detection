@@ -151,7 +151,7 @@ def main() -> None:
                 print(f"  WARNING: detection failed for {filter_name}/{name}: {exc}")
 
         if not candidates:
-            print(f"{label}  →  SKIPPED (no readable variants)")
+            print(f"{label}  ->  SKIPPED (no readable variants)")
             continue
 
         # ---- Pick the better filter ----
@@ -160,7 +160,7 @@ def main() -> None:
         score       = _quality_score(best_result)
         n_det       = len(best_result["detections"])
 
-        print(f"{label}  →  {best_filter:8s}  detections={n_det}  score={score:.3f}")
+        print(f"{label}  ->  {best_filter:8s}  detections={n_det}  score={score:.3f}")
 
         # ---- Persist outputs ----
         _save_result(stem, best_result, best_filter, OUTPUT_DIR)

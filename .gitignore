@@ -40,3 +40,6 @@ logs/
 
 # Caches
 .pytest_cache/
+
+# Outputs from processing runs
+outputs/

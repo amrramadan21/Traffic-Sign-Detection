@@ -38,7 +38,7 @@ python detection/run_kmeans_batch.py --max-images 10
 ```
 
 Process the full dataset (defaults auto-detect `data/raw` and writes to
-`outputs/kmeans`):
+`data/detection/kmeans`):
 
 ```bash
 python detection/run_kmeans_batch.py
@@ -60,7 +60,7 @@ python detection/run_kmeans_batch.py --select-by-detection
 
 **CLI Options (summary)**
 - `--data-dir`: Path to `data/raw` containing `images/` and `annotations/`.
-- `--out-dir`: Output base (defaults to `PROJECT_ROOT/outputs/kmeans`).
+- `--out-dir`: Output base (defaults to `PROJECT_ROOT/data/detection/kmeans`).
 - `--k`: Number of clusters for K-means (default 5). Try 5–8 for traffic signs.
 - `--coverage-thresh`: Fractional coverage inside a ground-truth bbox to
   consider a cluster as covering the object (default 0.02).
@@ -122,20 +122,20 @@ How the code works (high-level)
 ---
 
 Output structure
-- `outputs/kmeans/annotated/` — annotated original images with boxes + coverage.
-- `outputs/kmeans/rois/` — cropped ROIs (from the raw image) named
+- `data/detection/kmeans/annotated/` — annotated original images with boxes + coverage.
+- `data/detection/kmeans/rois/` — cropped ROIs (from the raw image) named
   `{image}_{obj_index}_{canonical_label}.png`.
-- `outputs/kmeans/per_image.json` — array of per-image dicts with fields:
+- `data/detection/kmeans/per_image.json` — array of per-image dicts with fields:
   - `image`: original image filename
   - `processed_variant`: which variant was used (`raw`/`gaussian`/`median`)
   - `n_objects`: number of annotated objects
   - `detections`: list of detected clusters (name, best_cluster, coverage, bbox, detected)
   - `rois`: list of saved ROI metadata with `roi_path`, `coverage`, `detected`
   - `timings`: timing information (kmeans_seconds)
-- `outputs/kmeans/metrics.csv` — one-row-per-image summary (image, n_objects, n_detections, kmeans_seconds)
-- `outputs/kmeans/metrics_summary.json` — aggregated summary (counts, per-class rates, timing stats)
+- `data/detection/kmeans/metrics.csv` — one-row-per-image summary (image, n_objects, n_detections, kmeans_seconds)
+- `data/detection/kmeans/metrics_summary.json` — aggregated summary (counts, per-class rates, timing stats)
 
-Note: `outputs/` is in the repository `.gitignore` by default.
+Note: generated dataset outputs under `data/` are ignored by the repository `.gitignore` by default.
 
 ---
 

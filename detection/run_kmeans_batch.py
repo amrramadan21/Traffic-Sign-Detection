@@ -2,7 +2,7 @@
 Run K-Means segmentation across the raw dataset, save annotated images,
 ROIs and produce simple benchmarks/metrics.
 
-Creates outputs under `outputs/kmeans/`:
+Creates outputs under `data/detection/kmeans/`:
  - annotated/: original images with bbox overlays and coverage
  - rois/: cropped ROIs per annotation
  - metrics.csv / metrics_summary.json / per_image.json
@@ -385,7 +385,7 @@ def process_image(
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data-dir', type=Path, default=None, help='Path to data/raw folder (contains images/ and annotations/)')
-    parser.add_argument('--out-dir', type=Path, default=None, help='Output base folder (defaults to project_root/outputs/kmeans)')
+    parser.add_argument('--out-dir', type=Path, default=None, help='Output base folder (defaults to project_root/data/detection/kmeans)')
     parser.add_argument('--k', type=int, default=5)
     parser.add_argument('--coverage-thresh', type=float, default=0.02)
     parser.add_argument('--max-images', type=int, default=0, help='Process at most N images (0 = all)')
@@ -405,7 +405,7 @@ def main():
     else:
         args.data_dir = args.data_dir.resolve()
     if args.out_dir is None:
-        args.out_dir = project_root / 'outputs' / 'kmeans'
+        args.out_dir = project_root / 'data' / 'detection' / 'kmeans'
     else:
         args.out_dir = args.out_dir.resolve()
 
